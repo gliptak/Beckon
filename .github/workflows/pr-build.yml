@@ -1,0 +1,85 @@
+name: PR Build
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  build:
+    name: Build (ad-hoc signed)
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        # Prefer the latest stable Xcode available on the runner.
+        run: sudo xcode-select -s /Applications/Xcode.app
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - name: Build
+        run: |
+          xcodebuild \
+            -project Beckon.xcodeproj \
+            -scheme Beckon \
+            -configuration Release \
+            -derivedDataPath build/DerivedData \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            SYMROOT=build/products \
+            build
+
+      - name: Locate built app
+        # xcodebuild places the product at build/products/Release/Beckon.app
+        run: ls -la build/products/Release/
+
+      - name: Ad-hoc sign app bundle
+        run: |
+          APP_PATH="build/products/Release/Beckon.app"
+          codesign --force --deep --sign - --timestamp=none "$APP_PATH"
+          codesign --verify --deep --strict --verbose=2 "$APP_PATH"
+
+      - name: Package app bundle
+        run: |
+          # Use ditto for macOS app bundles so bundle metadata is preserved.
+          ditto -c -k --sequesterRsrc --keepParent \
+            build/products/Release/Beckon.app \
+            Beckon-unsigned.zip
+
+      - name: Upload artifact
+        id: upload-artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Beckon-adhoc-signed
+          path: Beckon-unsigned.zip
+          retention-days: 14
+
+      - name: Comment on PR with artifact link
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const artifactUrl = '${{ steps.upload-artifact.outputs.artifact-url }}';
+            const body = [
+              'Ad-hoc signed build artifact is ready.',
+              '',
+              `Download: ${artifactUrl}`,
+              '',
+              'If macOS blocks launch after download, remove quarantine and open:',
+              'xattr -dr com.apple.quarantine Beckon.app',
+            ].join('\n');
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body,
+            });

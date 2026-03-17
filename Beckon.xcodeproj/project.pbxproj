@@ -14,6 +14,7 @@
 		A10000050000000000000001 /* WindowFinder.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000150000000000000001 /* WindowFinder.swift */; };
 		A10000060000000000000001 /* FocusFollowsMouseManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000160000000000000001 /* FocusFollowsMouseManager.swift */; };
 		A10000070000000000000001 /* AppKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A10000210000000000000001 /* AppKit.framework */; };
+		A10000080000000000000001 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A10000190000000000000001 /* Assets.xcassets */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -25,6 +26,7 @@
 		A10000160000000000000001 /* FocusFollowsMouseManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FocusFollowsMouseManager.swift; sourceTree = "<group>"; };
 		A10000170000000000000001 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A10000180000000000000001 /* Beckon.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Beckon.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A10000190000000000000001 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A10000210000000000000001 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
@@ -52,6 +54,7 @@
 		A10000420000000000000001 /* Beckon */ = {
 			isa = PBXGroup;
 			children = (
+				A10000190000000000000001 /* Assets.xcassets */,
 				A10000110000000000000001 /* BeckonApp.swift */,
 				A10000120000000000000001 /* AppDelegate.swift */,
 				A10000130000000000000001 /* SettingsModel.swift */,
@@ -137,6 +140,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A10000080000000000000001 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

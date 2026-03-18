@@ -5,6 +5,7 @@ final class SettingsModel: ObservableObject {
         static let isEnabled = "isEnabled"
         static let hoverDelayMilliseconds = "hoverDelayMilliseconds"
         static let raiseOnFocus = "raiseOnFocus"
+        static let velocitySensitivity = "velocitySensitivity"
     }
 
     private let defaults: UserDefaults
@@ -21,6 +22,10 @@ final class SettingsModel: ObservableObject {
         didSet { defaults.set(raiseOnFocus, forKey: Key.raiseOnFocus) }
     }
 
+    @Published var velocitySensitivity: Double {
+        didSet { defaults.set(velocitySensitivity, forKey: Key.velocitySensitivity) }
+    }
+
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
 
@@ -34,9 +39,13 @@ final class SettingsModel: ObservableObject {
         if defaults.object(forKey: Key.raiseOnFocus) == nil {
             defaults.set(true, forKey: Key.raiseOnFocus)
         }
+        if defaults.object(forKey: Key.velocitySensitivity) == nil {
+            defaults.set(0.08, forKey: Key.velocitySensitivity)
+        }
 
         self.isEnabled = defaults.bool(forKey: Key.isEnabled)
         self.hoverDelayMilliseconds = defaults.double(forKey: Key.hoverDelayMilliseconds)
         self.raiseOnFocus = defaults.bool(forKey: Key.raiseOnFocus)
+        self.velocitySensitivity = defaults.double(forKey: Key.velocitySensitivity)
     }
 }

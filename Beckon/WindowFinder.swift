@@ -8,10 +8,15 @@ struct WindowMatch {
 }
 
 final class WindowFinder {
+    var debugLastLookup: String = "—"
+
     func windowUnderMouse(at mouseLocation: CGPoint) -> WindowMatch? {
         guard let infoList = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID) as? [[String: Any]] else {
+            debugLastLookup = "CGWindowList returned nil"
             return nil
         }
+
+        debugLastLookup = "Found \(infoList.count) windows; checking point (\(Int(mouseLocation.x)),\(Int(mouseLocation.y)))"
 
         for info in infoList {
             guard let layer = info[kCGWindowLayer as String] as? Int,
@@ -25,16 +30,22 @@ final class WindowFinder {
                 continue
             }
 
+            debugLastLookup = "Matched bounds for window #\(windowNumber)"
             let appElement = AXUIElementCreateApplication(pid)
             if let exactWindow = matchingAXWindow(in: appElement, mouseLocation: mouseLocation) {
+                debugLastLookup = "Found exact AX match"
                 return WindowMatch(processID: pid, windowElement: exactWindow, windowNumber: windowNumber)
             }
 
             if let firstWindow = firstAXWindow(in: appElement) {
+                debugLastLookup = "Using first AX window"
                 return WindowMatch(processID: pid, windowElement: firstWindow, windowNumber: windowNumber)
             }
+
+            debugLastLookup = "No AX windows for PID \(pid)"
         }
 
+        debugLastLookup = "No window at point"
         return nil
     }
 

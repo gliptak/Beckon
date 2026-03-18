@@ -23,6 +23,9 @@ struct BeckonApp: App {
                 .onChange(of: settings.raiseOnFocus) { _ in
                     syncManagerFromSettings()
                 }
+                .onChange(of: settings.velocitySensitivity) { _ in
+                    syncManagerFromSettings()
+                }
         }
         .menuBarExtraStyle(.window)
     }
@@ -31,6 +34,7 @@ struct BeckonApp: App {
         let manager = FocusFollowsMouseManager.shared
         manager.hoverDelayMilliseconds = settings.hoverDelayMilliseconds
         manager.raiseOnFocus = settings.raiseOnFocus
+        manager.velocitySensitivity = settings.velocitySensitivity
         manager.setEnabled(settings.isEnabled)
     }
 }

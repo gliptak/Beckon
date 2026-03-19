@@ -35,6 +35,29 @@ If macOS did not show the permission dialog, open:
 
 Then enable Beckon manually.
 
+### Command Line (Makefile)
+
+From the repository root, you can build and run without opening Xcode:
+
+```bash
+make help
+make list
+make test
+make build
+make run
+```
+
+Available targets:
+
+- `make list`: list project targets/schemes
+- `make build`: unsigned Release build to `.build/Build/Products/Release/Beckon.app`
+- `make release`: alias for `make build`
+- `make debug`: unsigned Debug build
+- `make test`: run unit tests on macOS
+- `make ci`: run local CI checks (test + release build)
+- `make run`: build Release and launch the app
+- `make clean`: remove local build output (`.build`)
+
 ## Usage
 
 Use the menu bar icon to open settings:
@@ -67,6 +90,10 @@ Without Accessibility access, it cannot move focus between windows.
 - Improve edge-case handling (fullscreen apps, Spaces, transient windows)
 - Add optional diagnostics logging toggle in the menu
 - Add simple automated tests for non-UI logic
+- Add debounce and duplicate-focus suppression unit tests for `FocusFollowsMouseManager` via injected scheduler/window/focus seams
+- Add `WindowFinder` filtering tests by extracting pure candidate-selection logic from CG/AX calls
+- Add settings-to-manager sync tests by extracting a small coordinator from `BeckonApp.syncManagerFromSettings()`
+- Add XCUI smoke tests for menu controls and persistence with a test-host window mode for `MenuBarView`
 
 ### Menu Bar / Transit Focus Problem
 
@@ -75,12 +102,16 @@ passes over intermediate windows. This causes unintended focus switches before t
 user reaches their intended target (e.g. a menu, or a distant window).
 
 **Implemented:**
-- **Velocity-adaptive dwell**: the effective debounce delay scales up proportionally
-  with pointer speed (pts/s). Fast transit requires a much longer dwell to trigger
-  focus; slow deliberate hover uses the configured delay. Capped at 500 ms.
+- **Configurable base hover delay**: users set a base dwell threshold from 0-500 ms
+  (default 25 ms, step 5 ms) in the menu.
+- **Velocity-adaptive effective delay**: for each mouse-move event, Beckon computes
+  pointer speed and inflates the dwell delay using
+  `effectiveDelayMs = min(500, hoverDelayMs + speedPtsPerSec * velocitySensitivity)`.
+  Fast transit requires a much longer hover to trigger focus, while slow deliberate
+  movement stays close to the configured base delay.
 - **User-tunable velocity sensitivity**: slider exposed in the menu controls the
-  speed-to-delay factor, so users can tune transit behavior for display size,
-  pointer settings, and personal movement style.
+  speed-to-delay factor (0.00-0.20, default 0.08, step 0.01), so users can tune
+  transit behavior for display size, pointer settings, and personal movement style.
 
 **Possible future approaches:**
 - **Upward-trajectory suppression**: track a rolling window of Y-deltas; if the

@@ -34,6 +34,49 @@ jobs:
             -derivedDataPath build/DerivedData \
             test
 
+      - name: Generate coverage report
+        id: coverage
+        run: |
+          XCRESULT=$(find build/DerivedData/Logs/Test -maxdepth 1 -type d -name '*.xcresult' | sort | tail -n 1)
+          if [[ -z "$XCRESULT" ]]; then
+            echo "No xcresult found under build/DerivedData/Logs/Test"
+            exit 1
+          fi
+
+          xcrun xccov view --report "$XCRESULT" > coverage-report.txt
+          APP_LINE=$(grep -m1 'Beckon.app' coverage-report.txt | tr -s ' ' | sed 's/^ //' || true)
+          if [[ -z "$APP_LINE" ]]; then
+            APP_LINE="Beckon.app coverage line unavailable"
+          fi
+
+          echo "xcresult=$XCRESULT" >> "$GITHUB_OUTPUT"
+          echo "app_line=$APP_LINE" >> "$GITHUB_OUTPUT"
+
+          {
+            echo "### Code Coverage"
+            echo ""
+            echo "- App: \`$APP_LINE\`"
+            echo ""
+            echo "<details><summary>Coverage excerpt</summary>"
+            echo ""
+            echo '```text'
+            head -n 80 coverage-report.txt
+            echo '```'
+            echo "</details>"
+          } > coverage-summary.md
+
+          cat coverage-summary.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload coverage artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Beckon-coverage-report
+          path: |
+            coverage-report.txt
+            coverage-summary.md
+            ${{ steps.coverage.outputs.xcresult }}
+          retention-days: 14
+
       - name: Build
         run: |
           xcodebuild \
@@ -76,11 +119,17 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
+            const fs = require('fs');
             const artifactUrl = '${{ steps.upload-artifact.outputs.artifact-url }}';
+            const coverageSummary = fs.existsSync('coverage-summary.md')
+              ? fs.readFileSync('coverage-summary.md', 'utf8')
+              : '### Code Coverage\n\nCoverage summary unavailable.';
             const body = [
               'Ad-hoc signed build artifact is ready.',
               '',
               `Download: ${artifactUrl}`,
+              '',
+              coverageSummary,
               '',
               'If macOS blocks launch after download, remove quarantine and open:',
               'xattr -dr com.apple.quarantine Beckon.app',

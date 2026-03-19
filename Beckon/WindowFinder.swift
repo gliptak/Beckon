@@ -18,17 +18,15 @@ final class WindowFinder {
 
         debugLastLookup = "Found \(infoList.count) windows; checking point (\(Int(mouseLocation.x)),\(Int(mouseLocation.y)))"
 
-        for info in infoList {
-            guard let layer = info[kCGWindowLayer as String] as? Int,
-                  layer == 0,
-                  let boundsDict = info[kCGWindowBounds as String] as? [String: Any],
-                  let bounds = CGRect(dictionaryRepresentation: boundsDict as CFDictionary),
-                  bounds.contains(mouseLocation),
-                  let windowNumber = info[kCGWindowNumber as String] as? Int,
-                  let pid = info[kCGWindowOwnerPID as String] as? pid_t,
-                  pid != ProcessInfo.processInfo.processIdentifier else {
-                continue
-            }
+        let candidates = WindowCandidateSelector.candidates(
+            under: mouseLocation,
+            from: infoList,
+            excludingProcessID: ProcessInfo.processInfo.processIdentifier
+        )
+
+        for candidate in candidates {
+            let windowNumber = candidate.windowNumber
+            let pid = candidate.processID
 
             debugLastLookup = "Matched bounds for window #\(windowNumber)"
             let appElement = AXUIElementCreateApplication(pid)

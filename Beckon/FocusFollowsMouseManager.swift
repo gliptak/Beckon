@@ -65,20 +65,15 @@ final class FocusFollowsMouseManager: @unchecked Sendable {
 
         // Velocity-adaptive dwell: fast pointer movement inflates the effective delay,
         // making transient window crossings less likely to steal focus.
-        let effectiveDelayMs: Double
-        if lastEventTimestamp > 0 {
-            let timeDelta = timestamp - lastEventTimestamp  // seconds
-            if timeDelta > 0 {
-                let distance = Double(sqrt(deltaX * deltaX + deltaY * deltaY))  // pts
-                let speedPPS = distance / timeDelta  // pts per second
-                let velocityBonus = speedPPS * max(0, velocitySensitivity)
-                effectiveDelayMs = min(Self.maxEffectiveDelayMs, hoverDelayMilliseconds + velocityBonus)
-            } else {
-                effectiveDelayMs = hoverDelayMilliseconds
-            }
-        } else {
-            effectiveDelayMs = hoverDelayMilliseconds
-        }
+        let effectiveDelayMs = HoverDelayCalculator.effectiveDelayMs(
+            baseDelayMs: hoverDelayMilliseconds,
+            lastEventTimestamp: lastEventTimestamp,
+            currentTimestamp: timestamp,
+            deltaX: deltaX,
+            deltaY: deltaY,
+            velocitySensitivity: velocitySensitivity,
+            maxDelayMs: Self.maxEffectiveDelayMs
+        )
         lastEventTimestamp = timestamp
 
         // Check window and permission state immediately (before debounce delay)

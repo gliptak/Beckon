@@ -10,8 +10,8 @@ permissions:
   pull-requests: write
 
 jobs:
-  build:
-    name: Build (ad-hoc signed)
+  build-and-test:
+    name: Test + Build (ad-hoc signed)
     runs-on: macos-latest
 
     steps:
@@ -24,6 +24,15 @@ jobs:
 
       - name: Show Xcode version
         run: xcodebuild -version
+
+      - name: Run unit tests
+        run: |
+          xcodebuild \
+            -project Beckon.xcodeproj \
+            -scheme Beckon \
+            -destination "platform=macOS,arch=arm64" \
+            -derivedDataPath build/DerivedData \
+            test
 
       - name: Build
         run: |

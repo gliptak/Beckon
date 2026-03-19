@@ -2,8 +2,18 @@ import ApplicationServices
 import AppKit
 import Foundation
 
+protocol WindowFinding {
+    var debugLastLookup: String { get }
+    func windowUnderMouse(at mouseLocation: CGPoint) -> WindowMatch?
+}
+
+extension WindowFinder: WindowFinding {}
+
 final class FocusFollowsMouseManager: @unchecked Sendable {
     static let shared = FocusFollowsMouseManager()
+
+    typealias Scheduler = (_ delaySeconds: Double, _ workItem: DispatchWorkItem) -> Void
+    typealias FocusExecutor = (_ match: WindowMatch, _ raiseOnFocus: Bool) -> Void
 
     var hoverDelayMilliseconds: Double = 25
     var raiseOnFocus: Bool = true
@@ -18,12 +28,50 @@ final class FocusFollowsMouseManager: @unchecked Sendable {
     private static let maxEffectiveDelayMs: Double = 500
 
     private var monitor: Any?
-    private let finder = WindowFinder()
+    private let finder: WindowFinding
     private var pendingWorkItem: DispatchWorkItem?
     private var lastWindowNumber: Int?
     private var lastEventTimestamp: TimeInterval = 0
+    private let isProcessTrusted: () -> Bool
+    private let mouseLocationProvider: () -> CGPoint
+    private let primaryScreenHeightProvider: () -> CGFloat
+    private let scheduleWorkItem: Scheduler
+    private let nowProvider: () -> Date
+    private let focusExecutor: FocusExecutor
 
-    private init() {}
+    private static func defaultFocusExecutor(match: WindowMatch, raiseOnFocus: Bool) {
+        if let app = NSRunningApplication(processIdentifier: match.processID) {
+            app.activate(options: [.activateIgnoringOtherApps])
+        }
+
+        let focusedValue = kCFBooleanTrue!
+        _ = AXUIElementSetAttributeValue(match.windowElement, kAXMainAttribute as CFString, focusedValue)
+        _ = AXUIElementSetAttributeValue(match.windowElement, kAXFocusedAttribute as CFString, focusedValue)
+
+        if raiseOnFocus {
+            _ = AXUIElementPerformAction(match.windowElement, kAXRaiseAction as CFString)
+        }
+    }
+
+    init(
+        finder: WindowFinding = WindowFinder(),
+        isProcessTrusted: @escaping () -> Bool = AXIsProcessTrusted,
+        mouseLocationProvider: @escaping () -> CGPoint = { NSEvent.mouseLocation },
+        primaryScreenHeightProvider: @escaping () -> CGFloat = { NSScreen.screens.first?.frame.height ?? 0 },
+        scheduleWorkItem: @escaping Scheduler = { delaySeconds, workItem in
+            DispatchQueue.main.asyncAfter(deadline: .now() + delaySeconds, execute: workItem)
+        },
+        nowProvider: @escaping () -> Date = Date.init,
+        focusExecutor: @escaping FocusExecutor = FocusFollowsMouseManager.defaultFocusExecutor(match:raiseOnFocus:)
+    ) {
+        self.finder = finder
+        self.isProcessTrusted = isProcessTrusted
+        self.mouseLocationProvider = mouseLocationProvider
+        self.primaryScreenHeightProvider = primaryScreenHeightProvider
+        self.scheduleWorkItem = scheduleWorkItem
+        self.nowProvider = nowProvider
+        self.focusExecutor = focusExecutor
+    }
 
     func setEnabled(_ enabled: Bool) {
         if enabled {
@@ -61,6 +109,14 @@ final class FocusFollowsMouseManager: @unchecked Sendable {
     }
 
     private func scheduleFocusCheck(timestamp: TimeInterval, deltaX: CGFloat, deltaY: CGFloat) {
+        let appKitPoint = mouseLocationProvider()
+        let primaryScreenHeight = primaryScreenHeightProvider()
+        let mousePoint = CGPoint(x: appKitPoint.x, y: primaryScreenHeight - appKitPoint.y)
+
+        scheduleFocusCheck(timestamp: timestamp, deltaX: deltaX, deltaY: deltaY, mousePoint: mousePoint, isTrusted: isProcessTrusted())
+    }
+
+    func scheduleFocusCheck(timestamp: TimeInterval, deltaX: CGFloat, deltaY: CGFloat, mousePoint: CGPoint, isTrusted: Bool) {
         pendingWorkItem?.cancel()
 
         // Velocity-adaptive dwell: fast pointer movement inflates the effective delay,
@@ -78,14 +134,10 @@ final class FocusFollowsMouseManager: @unchecked Sendable {
 
         // Check window and permission state immediately (before debounce delay)
         // so debug display updates even if focus action is debounced.
-        guard AXIsProcessTrusted() else {
+        guard isTrusted else {
             debugLastWindowInfo = "AX permission denied"
             return
         }
-
-        let appKitPoint = NSEvent.mouseLocation
-        let primaryScreenHeight = NSScreen.screens.first?.frame.height ?? 0
-        let mousePoint = CGPoint(x: appKitPoint.x, y: primaryScreenHeight - appKitPoint.y)
 
         guard let match = finder.windowUnderMouse(at: mousePoint) else {
             debugLastWindowInfo = finder.debugLastLookup
@@ -100,14 +152,14 @@ final class FocusFollowsMouseManager: @unchecked Sendable {
         }
         pendingWorkItem = workItem
 
-        let now = Date()
+        let now = nowProvider()
         let formatter = DateFormatter()
         formatter.timeStyle = .medium
         formatter.dateStyle = .none
         debugLastEventTime = formatter.string(from: now)
 
         let delaySeconds = effectiveDelayMs / 1000.0
-        DispatchQueue.main.asyncAfter(deadline: .now() + delaySeconds, execute: workItem)
+        scheduleWorkItem(delaySeconds, workItem)
     }
 
     private func applyFocusToWindow(_ match: WindowMatch) {
@@ -117,16 +169,6 @@ final class FocusFollowsMouseManager: @unchecked Sendable {
 
         lastWindowNumber = match.windowNumber
 
-        if let app = NSRunningApplication(processIdentifier: match.processID) {
-            app.activate(options: [.activateIgnoringOtherApps])
-        }
-
-        let focusedValue = kCFBooleanTrue!
-        _ = AXUIElementSetAttributeValue(match.windowElement, kAXMainAttribute as CFString, focusedValue)
-        _ = AXUIElementSetAttributeValue(match.windowElement, kAXFocusedAttribute as CFString, focusedValue)
-
-        if raiseOnFocus {
-            _ = AXUIElementPerformAction(match.windowElement, kAXRaiseAction as CFString)
-        }
+        focusExecutor(match, raiseOnFocus)
     }
 }

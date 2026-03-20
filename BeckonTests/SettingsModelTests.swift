@@ -24,8 +24,10 @@ final class SettingsModelTests: XCTestCase {
 
         XCTAssertTrue(settings.isEnabled)
         XCTAssertEqual(settings.hoverDelayMilliseconds, 25.0, accuracy: 0.0001)
-        XCTAssertTrue(settings.raiseOnFocus)
+        XCTAssertFalse(settings.raiseOnFocus)
         XCTAssertEqual(settings.velocitySensitivity, 0.08, accuracy: 0.0001)
+        XCTAssertTrue(settings.highlightBorder)
+        XCTAssertEqual(settings.borderWidth, 2.0, accuracy: 0.0001)
     }
 
     func testMutationsPersistAcrossNewModelInstance() {
@@ -34,6 +36,8 @@ final class SettingsModelTests: XCTestCase {
         settings?.hoverDelayMilliseconds = 180.0
         settings?.raiseOnFocus = false
         settings?.velocitySensitivity = 0.14
+        settings?.highlightBorder = false
+        settings?.borderWidth = 4.0
 
         settings = nil
 
@@ -42,5 +46,34 @@ final class SettingsModelTests: XCTestCase {
         XCTAssertEqual(reloaded.hoverDelayMilliseconds, 180.0, accuracy: 0.0001)
         XCTAssertFalse(reloaded.raiseOnFocus)
         XCTAssertEqual(reloaded.velocitySensitivity, 0.14, accuracy: 0.0001)
+        XCTAssertFalse(reloaded.highlightBorder)
+        XCTAssertEqual(reloaded.borderWidth, 4.0, accuracy: 0.0001)
+    }
+
+    func testOldBorderWidthMigratesToCurrentDefault() {
+        defaults.set(3.0, forKey: "borderWidth")
+        defaults.set(false, forKey: "highlightStyleMigratedV1")
+
+        let settings = SettingsModel(defaults: defaults)
+        XCTAssertEqual(settings.borderWidth, 2.0, accuracy: 0.0001)
+    }
+
+    func testResetToDefaultsRestoresAllSettings() {
+        let settings = SettingsModel(defaults: defaults)
+        settings.isEnabled = false
+        settings.hoverDelayMilliseconds = 180.0
+        settings.raiseOnFocus = false
+        settings.velocitySensitivity = 0.14
+        settings.highlightBorder = false
+        settings.borderWidth = 7.0
+
+        settings.resetToDefaults()
+
+        XCTAssertTrue(settings.isEnabled)
+        XCTAssertEqual(settings.hoverDelayMilliseconds, 25.0, accuracy: 0.0001)
+        XCTAssertFalse(settings.raiseOnFocus)
+        XCTAssertEqual(settings.velocitySensitivity, 0.08, accuracy: 0.0001)
+        XCTAssertTrue(settings.highlightBorder)
+        XCTAssertEqual(settings.borderWidth, 2.0, accuracy: 0.0001)
     }
 }

@@ -1,4 +1,5 @@
 import ApplicationServices
+import AppKit
 import SwiftUI
 
 struct MenuBarView: View {
@@ -8,6 +9,11 @@ struct MenuBarView: View {
     @State private var lastEventTime: String = "—"
     @State private var lastWindowInfo: String = "—"
     private let debugRefreshTimer = Timer.publish(every: 0.5, on: .main, in: .common).autoconnect()
+
+    @MainActor
+    private var currentBorderPreviewColor: NSColor {
+        BorderAutoColorResolver.color(for: NSApp.effectiveAppearance)
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -44,9 +50,43 @@ struct MenuBarView: View {
 
             Toggle("Raise window when focused", isOn: $settings.raiseOnFocus)
 
+            Toggle("Highlight focused window border", isOn: $settings.highlightBorder)
+
+            if settings.highlightBorder {
+                HStack {
+                    Text("Border color")
+                        .font(.caption)
+                    Spacer()
+                    RoundedRectangle(cornerRadius: 3)
+                        .fill(Color(nsColor: currentBorderPreviewColor))
+                        .frame(width: 28, height: 16)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 3)
+                                .stroke(Color(nsColor: .separatorColor), lineWidth: 1)
+                        )
+                }
+
+                Text("Auto mode adapts to light/dark appearance")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Border width: \(Int(settings.borderWidth)) px")
+                        .font(.caption)
+                    Slider(value: $settings.borderWidth, in: 1...8, step: 1)
+                }
+            }
+
             Divider()
 
-            Toggle("Debug mode", isOn: $debugMode)
+            HStack {
+                Toggle("Debug mode", isOn: $debugMode)
+                Spacer()
+                Button("Reset Settings") {
+                    confirmAndResetSettings()
+                }
+                .font(.caption)
+            }
 
             Divider()
 
@@ -93,5 +133,19 @@ struct MenuBarView: View {
         let manager = FocusFollowsMouseManager.shared
         lastEventTime = manager.debugLastEventTime
         lastWindowInfo = manager.debugLastWindowInfo
+    }
+
+    @MainActor
+    private func confirmAndResetSettings() {
+        let alert = NSAlert()
+        alert.messageText = "Reset Settings?"
+        alert.informativeText = "This will restore all Beckon settings, including highlight color and border width."
+        alert.alertStyle = .warning
+        alert.addButton(withTitle: "Reset")
+        alert.addButton(withTitle: "Cancel")
+        let response = alert.runModal()
+        if response == .alertFirstButtonReturn {
+            settings.resetToDefaults()
+        }
     }
 }

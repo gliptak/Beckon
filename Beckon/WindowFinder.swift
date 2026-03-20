@@ -92,13 +92,27 @@ final class WindowFinder {
             return nil
         }
 
+        return AXWindowFrameDecoder.frame(positionValue: axPosition, sizeValue: axSize)
+    }
+}
+
+enum AXWindowFrameDecoder {
+    static func frame(positionValue: CFTypeRef, sizeValue: CFTypeRef) -> CGRect? {
+        guard CFGetTypeID(positionValue) == AXValueGetTypeID(),
+              CFGetTypeID(sizeValue) == AXValueGetTypeID() else {
+            return nil
+        }
+
+        let axPosition = positionValue as! AXValue
+        let axSize = sizeValue as! AXValue
+
         var point = CGPoint.zero
         var size = CGSize.zero
 
-        guard AXValueGetType(axPosition as! AXValue) == .cgPoint,
-              AXValueGetType(axSize as! AXValue) == .cgSize,
-              AXValueGetValue(axPosition as! AXValue, .cgPoint, &point),
-              AXValueGetValue(axSize as! AXValue, .cgSize, &size) else {
+        guard AXValueGetType(axPosition) == .cgPoint,
+              AXValueGetType(axSize) == .cgSize,
+              AXValueGetValue(axPosition, .cgPoint, &point),
+              AXValueGetValue(axSize, .cgSize, &size) else {
             return nil
         }
 

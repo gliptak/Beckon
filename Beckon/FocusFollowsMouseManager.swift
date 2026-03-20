@@ -16,8 +16,17 @@ final class FocusFollowsMouseManager: @unchecked Sendable {
     typealias FocusExecutor = (_ match: WindowMatch, _ raiseOnFocus: Bool) -> Void
 
     var hoverDelayMilliseconds: Double = 25
-    var raiseOnFocus: Bool = true
+    var raiseOnFocus: Bool = false
     var velocitySensitivity: Double = 0.08
+    var highlightBorder: Bool = true {
+        didSet {
+            if !highlightBorder {
+                stopBorderTracking()
+                hideBorderOverlay()
+            }
+        }
+    }
+    var borderWidth: Double = 2.0
 
     // Debug properties (accessed from main thread only)
     var debugLastEventTime: String = "—"
@@ -26,12 +35,18 @@ final class FocusFollowsMouseManager: @unchecked Sendable {
     // Velocity-adaptive dwell: scale effective delay with pointer speed.
     // With sensitivity 0.08, 800 pts/s adds ~64 ms; 3000 pts/s adds ~240 ms.
     private static let maxEffectiveDelayMs: Double = 500
+    private static let scrollSuppressionSeconds: TimeInterval = 0.35
 
     private var monitor: Any?
     private let finder: WindowFinding
     private var pendingWorkItem: DispatchWorkItem?
     private var lastWindowNumber: Int?
     private var lastEventTimestamp: TimeInterval = 0
+    private var scrollMonitor: Any?
+    private var activeSpaceObserver: NSObjectProtocol?
+    private var suppressFocusUntilTimestamp: TimeInterval = 0
+    private var borderTrackingTimer: Timer?
+    private var trackedWindowElement: AXUIElement?
     private let isProcessTrusted: () -> Bool
     private let mouseLocationProvider: () -> CGPoint
     private let primaryScreenHeightProvider: () -> CGFloat
@@ -95,16 +110,43 @@ final class FocusFollowsMouseManager: @unchecked Sendable {
                 self?.scheduleFocusCheck(timestamp: timestamp, deltaX: deltaX, deltaY: deltaY)
             }
         }
+
+        // Suppress focus changes while the user is actively scrolling (e.g. long popup menus).
+        scrollMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.scrollWheel]) { [weak self] event in
+            let timestamp = event.timestamp
+            DispatchQueue.main.async { [weak self] in
+                self?.noteScrollEvent(timestamp: timestamp)
+            }
+        }
+
+        activeSpaceObserver = NotificationCenter.default.addObserver(
+            forName: NSWorkspace.activeSpaceDidChangeNotification,
+            object: NSWorkspace.shared,
+            queue: .main
+        ) { [weak self] _ in
+            self?.handleActiveSpaceChange()
+        }
     }
 
     private func stop() {
         pendingWorkItem?.cancel()
         pendingWorkItem = nil
         lastWindowNumber = nil
+        suppressFocusUntilTimestamp = 0
+        stopBorderTracking()
+        hideBorderOverlay()
 
         if let monitor {
             NSEvent.removeMonitor(monitor)
             self.monitor = nil
+        }
+        if let scrollMonitor {
+            NSEvent.removeMonitor(scrollMonitor)
+            self.scrollMonitor = nil
+        }
+        if let activeSpaceObserver {
+            NotificationCenter.default.removeObserver(activeSpaceObserver)
+            self.activeSpaceObserver = nil
         }
     }
 
@@ -113,10 +155,21 @@ final class FocusFollowsMouseManager: @unchecked Sendable {
         let primaryScreenHeight = primaryScreenHeightProvider()
         let mousePoint = CGPoint(x: appKitPoint.x, y: primaryScreenHeight - appKitPoint.y)
 
-        scheduleFocusCheck(timestamp: timestamp, deltaX: deltaX, deltaY: deltaY, mousePoint: mousePoint, isTrusted: isProcessTrusted())
+        scheduleFocusCheck(
+            timestamp: timestamp,
+            deltaX: deltaX,
+            deltaY: deltaY,
+            mousePoint: mousePoint,
+            isTrusted: isProcessTrusted()
+        )
     }
 
     func scheduleFocusCheck(timestamp: TimeInterval, deltaX: CGFloat, deltaY: CGFloat, mousePoint: CGPoint, isTrusted: Bool) {
+        if timestamp <= suppressFocusUntilTimestamp {
+            debugLastWindowInfo = "Suppressed during scroll"
+            return
+        }
+
         pendingWorkItem?.cancel()
 
         // Velocity-adaptive dwell: fast pointer movement inflates the effective delay,
@@ -146,7 +199,7 @@ final class FocusFollowsMouseManager: @unchecked Sendable {
 
         debugLastWindowInfo = "Window #\(match.windowNumber) (PID \(match.processID))"
 
-        // Schedule focus action after velocity-adjusted debounce delay
+        // Schedule focus action after velocity-adjusted debounce delay.
         let workItem = DispatchWorkItem { [weak self] in
             self?.applyFocusToWindow(match)
         }
@@ -162,13 +215,111 @@ final class FocusFollowsMouseManager: @unchecked Sendable {
         scheduleWorkItem(delaySeconds, workItem)
     }
 
+    private func noteScrollEvent(timestamp: TimeInterval) {
+        suppressFocusUntilTimestamp = max(
+            suppressFocusUntilTimestamp,
+            timestamp + Self.scrollSuppressionSeconds
+        )
+        pendingWorkItem?.cancel()
+        pendingWorkItem = nil
+    }
+
     private func applyFocusToWindow(_ match: WindowMatch) {
         if lastWindowNumber == match.windowNumber {
+            // Same window can resize (maximize/fullscreen) without a focus change.
+            // Refresh the border frame so the overlay stays aligned.
+            if highlightBorder {
+                _ = showBorderHighlight(for: match.windowElement)
+                startBorderTracking(for: match.windowElement)
+            }
             return
         }
 
         lastWindowNumber = match.windowNumber
-
         focusExecutor(match, raiseOnFocus)
+
+        if highlightBorder {
+            _ = showBorderHighlight(for: match.windowElement)
+            startBorderTracking(for: match.windowElement)
+        } else {
+            stopBorderTracking()
+            hideBorderOverlay()
+        }
+    }
+
+    private func showBorderHighlight(for element: AXUIElement) -> Bool {
+        var cfValue: CFTypeRef?
+        guard AXUIElementCopyAttributeValue(element, "AXFrame" as CFString, &cfValue) == .success,
+              let axVal = cfValue,
+              CFGetTypeID(axVal) == AXValueGetTypeID() else { return false }
+
+        var cgFrame = CGRect.zero
+        // Cast is safe: we verified the type ID above.
+        AXValueGetValue(axVal as! AXValue, .cgRect, &cgFrame)
+
+        let screenHeight = primaryScreenHeightProvider()
+        withBorderOverlay { highlight in
+            let resolvedColor = BorderAutoColorResolver.color(for: NSApp.effectiveAppearance)
+            highlight.borderColor = resolvedColor
+            highlight.borderWidth = CGFloat(borderWidth)
+            highlight.show(forCGFrame: cgFrame, screenHeight: screenHeight)
+        }
+        return true
+    }
+
+    private func startBorderTracking(for element: AXUIElement) {
+        trackedWindowElement = element
+        if borderTrackingTimer != nil {
+            return
+        }
+
+        let timer = Timer(timeInterval: 1.0 / 30.0, repeats: true) { [weak self] _ in
+            self?.refreshTrackedBorderFrame()
+        }
+        timer.tolerance = 1.0 / 120.0
+        RunLoop.main.add(timer, forMode: .common)
+        borderTrackingTimer = timer
+    }
+
+    private func refreshTrackedBorderFrame() {
+        guard highlightBorder, let trackedWindowElement else {
+            stopBorderTracking()
+            hideBorderOverlay()
+            return
+        }
+
+        if !showBorderHighlight(for: trackedWindowElement) {
+            // During Spaces/Mission Control/fullscreen transitions, AX frame reads can fail.
+            // Hide stale border immediately and wait for next stable focus event.
+            stopBorderTracking()
+            lastWindowNumber = nil
+            hideBorderOverlay()
+        }
+    }
+
+    private func stopBorderTracking() {
+        borderTrackingTimer?.invalidate()
+        borderTrackingTimer = nil
+        trackedWindowElement = nil
+    }
+
+    private func handleActiveSpaceChange() {
+        pendingWorkItem?.cancel()
+        pendingWorkItem = nil
+        lastWindowNumber = nil
+        stopBorderTracking()
+        hideBorderOverlay()
+    }
+
+    private func hideBorderOverlay() {
+        MainActor.assumeIsolated {
+            BorderHighlightWindow.shared.hide()
+        }
+    }
+
+    private func withBorderOverlay(_ body: @MainActor (BorderHighlightWindow) -> Void) {
+        MainActor.assumeIsolated {
+            body(BorderHighlightWindow.shared)
+        }
     }
 }

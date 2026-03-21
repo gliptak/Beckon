@@ -6,7 +6,7 @@ final class SettingsModel: ObservableObject {
         static let hoverDelayMilliseconds = 25.0
         static let raiseOnFocus = false
         static let velocitySensitivity = 0.08
-        static let highlightBorder = true
+        static let highlightBorder = false
         static let borderWidth = 2.0
     }
 

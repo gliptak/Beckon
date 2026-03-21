@@ -54,8 +54,9 @@ struct MenuBarView: View {
 
             if settings.highlightBorder {
                 HStack {
-                    Text("Border color")
+                    Text("Border color (auto light/dark)")
                         .font(.caption)
+                        .foregroundStyle(.secondary)
                     Spacer()
                     RoundedRectangle(cornerRadius: 3)
                         .fill(Color(nsColor: currentBorderPreviewColor))
@@ -65,10 +66,6 @@ struct MenuBarView: View {
                                 .stroke(Color(nsColor: .separatorColor), lineWidth: 1)
                         )
                 }
-
-                Text("Auto mode adapts to light/dark appearance")
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
 
                 VStack(alignment: .leading, spacing: 6) {
                     Text("Border width: \(Int(settings.borderWidth)) px")

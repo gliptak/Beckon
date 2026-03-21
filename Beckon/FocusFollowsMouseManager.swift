@@ -18,7 +18,7 @@ final class FocusFollowsMouseManager: @unchecked Sendable {
     var hoverDelayMilliseconds: Double = 25
     var raiseOnFocus: Bool = false
     var velocitySensitivity: Double = 0.08
-    var highlightBorder: Bool = true {
+    var highlightBorder: Bool = false {
         didSet {
             if !highlightBorder {
                 stopBorderTracking()

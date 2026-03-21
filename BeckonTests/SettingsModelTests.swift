@@ -26,7 +26,7 @@ final class SettingsModelTests: XCTestCase {
         XCTAssertEqual(settings.hoverDelayMilliseconds, 25.0, accuracy: 0.0001)
         XCTAssertFalse(settings.raiseOnFocus)
         XCTAssertEqual(settings.velocitySensitivity, 0.08, accuracy: 0.0001)
-        XCTAssertTrue(settings.highlightBorder)
+        XCTAssertFalse(settings.highlightBorder)
         XCTAssertEqual(settings.borderWidth, 2.0, accuracy: 0.0001)
     }
 
@@ -73,7 +73,7 @@ final class SettingsModelTests: XCTestCase {
         XCTAssertEqual(settings.hoverDelayMilliseconds, 25.0, accuracy: 0.0001)
         XCTAssertFalse(settings.raiseOnFocus)
         XCTAssertEqual(settings.velocitySensitivity, 0.08, accuracy: 0.0001)
-        XCTAssertTrue(settings.highlightBorder)
+        XCTAssertFalse(settings.highlightBorder)
         XCTAssertEqual(settings.borderWidth, 2.0, accuracy: 0.0001)
     }
 }

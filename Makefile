@@ -1,6 +1,7 @@
 PROJECT := Beckon.xcodeproj
 SCHEME := Beckon
 CONFIG ?= Release
+APP_BUNDLE_ID := io.github.gliptak.beckon
 DERIVED_DATA := .build
 APP_PATH := $(DERIVED_DATA)/Build/Products/$(CONFIG)/Beckon.app
 APP_BINARY := $(APP_PATH)/Contents/MacOS/Beckon
@@ -8,7 +9,7 @@ UNIVERSAL_ARCHS := arm64 x86_64
 TEST_DESTINATION ?= platform=macOS,arch=arm64
 UNSIGNED_FLAGS := CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO
 
-.PHONY: help list build release debug universal test ci run clean
+.PHONY: help list build release debug universal test ci run clean zap
 
 help:
 	@echo "Targets:"
@@ -22,6 +23,7 @@ help:
 	@echo "  make run       - Build universal Release and launch app"
 	@echo "                   (run uses signing so Accessibility permission can persist)"
 	@echo "  make clean     - Remove local build output"
+	@echo "  make zap       - Remove local Beckon user defaults"
 
 list:
 	xcodebuild -list -project $(PROJECT)
@@ -81,3 +83,8 @@ run:
 
 clean:
 	rm -rf $(DERIVED_DATA)
+
+zap:
+	-@defaults delete $(APP_BUNDLE_ID)
+	@rm -f "$$HOME/Library/Preferences/$(APP_BUNDLE_ID).plist"
+	@echo "Removed local defaults for $(APP_BUNDLE_ID)"

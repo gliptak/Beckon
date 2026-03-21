@@ -12,6 +12,16 @@ enum WindowCandidateSelector {
         from infoList: [[String: Any]],
         excludingProcessID currentProcessID: pid_t
     ) -> [WindowCandidate] {
+        // If the topmost foreign window at the pointer is not a normal app window
+        // (layer 0), avoid focusing a window underneath transient UI like menus.
+        if let topmostLayer = topmostForeignLayer(
+            under: mouseLocation,
+            from: infoList,
+            excludingProcessID: currentProcessID
+        ), topmostLayer != 0 {
+            return []
+        }
+
         var result: [WindowCandidate] = []
 
         for info in infoList {
@@ -30,5 +40,26 @@ enum WindowCandidateSelector {
         }
 
         return result
+    }
+
+    private static func topmostForeignLayer(
+        under mouseLocation: CGPoint,
+        from infoList: [[String: Any]],
+        excludingProcessID currentProcessID: pid_t
+    ) -> Int? {
+        for info in infoList {
+            guard let pid = info[kCGWindowOwnerPID as String] as? pid_t,
+                  pid != currentProcessID,
+                  let boundsDict = info[kCGWindowBounds as String] as? [String: Any],
+                  let bounds = CGRect(dictionaryRepresentation: boundsDict as CFDictionary),
+                  bounds.contains(mouseLocation),
+                  let layer = info[kCGWindowLayer as String] as? Int else {
+                continue
+            }
+
+            return layer
+        }
+
+        return nil
     }
 }

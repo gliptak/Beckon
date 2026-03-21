@@ -23,7 +23,7 @@ final class WindowCandidateSelectorTests: XCTestCase {
         let currentPID: pid_t = 999
 
         let list: [[String: Any]] = [
-            makeWindowInfo(layer: 1, bounds: CGRect(x: 0, y: 0, width: 200, height: 200), windowNumber: 1, pid: 100),
+            makeWindowInfo(layer: 1, bounds: CGRect(x: 300, y: 300, width: 50, height: 50), windowNumber: 1, pid: 100),
             makeWindowInfo(layer: 0, bounds: CGRect(x: 300, y: 300, width: 50, height: 50), windowNumber: 2, pid: 101),
             makeWindowInfo(layer: 0, bounds: CGRect(x: 0, y: 0, width: 200, height: 200), windowNumber: 3, pid: currentPID),
             makeWindowInfo(layer: 0, bounds: CGRect(x: 0, y: 0, width: 200, height: 200), windowNumber: 4, pid: 102),
@@ -80,5 +80,40 @@ final class WindowCandidateSelectorTests: XCTestCase {
         )
 
         XCTAssertEqual(candidates, [WindowCandidate(processID: 555, windowNumber: 88)])
+    }
+
+    func testReturnsNoCandidatesWhenTopmostLayerIsNotZero() {
+        let point = CGPoint(x: 40, y: 40)
+
+        let list: [[String: Any]] = [
+            makeWindowInfo(layer: 25, bounds: CGRect(x: 0, y: 0, width: 100, height: 100), windowNumber: 1, pid: 100),
+            makeWindowInfo(layer: 0, bounds: CGRect(x: 0, y: 0, width: 100, height: 100), windowNumber: 2, pid: 101),
+        ]
+
+        let candidates = WindowCandidateSelector.candidates(
+            under: point,
+            from: list,
+            excludingProcessID: 0
+        )
+
+        XCTAssertTrue(candidates.isEmpty)
+    }
+
+    func testIgnoresTopmostNonZeroLayerFromCurrentProcess() {
+        let point = CGPoint(x: 40, y: 40)
+        let currentPID: pid_t = 999
+
+        let list: [[String: Any]] = [
+            makeWindowInfo(layer: 25, bounds: CGRect(x: 0, y: 0, width: 100, height: 100), windowNumber: 1, pid: currentPID),
+            makeWindowInfo(layer: 0, bounds: CGRect(x: 0, y: 0, width: 100, height: 100), windowNumber: 2, pid: 101),
+        ]
+
+        let candidates = WindowCandidateSelector.candidates(
+            under: point,
+            from: list,
+            excludingProcessID: currentPID
+        )
+
+        XCTAssertEqual(candidates, [WindowCandidate(processID: 101, windowNumber: 2)])
     }
 }

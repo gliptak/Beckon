@@ -102,17 +102,21 @@ jobs:
 
       - name: Package app bundle
         run: |
-          # Use ditto for macOS app bundles so bundle metadata is preserved.
-          ditto -c -k --sequesterRsrc --keepParent \
-            build/products/Release/Beckon.app \
-            Beckon-unsigned.zip
+          mkdir -p dist
+          cp -R build/products/Release/Beckon.app dist/
+          hdiutil create \
+            -volname "Beckon PR Build" \
+            -srcfolder dist \
+            -ov \
+            -format UDZO \
+            Beckon-adhoc-signed.dmg
 
       - name: Upload artifact
         id: upload-artifact
         uses: actions/upload-artifact@v4
         with:
           name: Beckon-adhoc-signed
-          path: Beckon-unsigned.zip
+          path: Beckon-adhoc-signed.dmg
           retention-days: 14
 
       - name: Comment on PR with artifact link

@@ -9,6 +9,10 @@ on:
         type: boolean
         default: true
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: write
   pull-requests: read
@@ -111,8 +115,25 @@ jobs:
 
           ls -lah dist
 
+      - name: Generate Homebrew cask
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+
+          DMG_PATH="dist/Beckon-v$VERSION.dmg"
+          SHA256=$(shasum -a 256 "$DMG_PATH" | awk '{print $1}')
+
+          sed \
+            -e "s/{{VERSION}}/$VERSION/g" \
+            -e "s/{{SHA256}}/$SHA256/g" \
+            Casks/beckon.rb.template > Casks/beckon.rb
+
+          echo "Generated Casks/beckon.rb:"
+          cat Casks/beckon.rb
+
       - name: Generate release notes from merged PRs
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         env:
           PREV_TAG: ${{ steps.version.outputs.prev_tag }}
           VERSION: ${{ steps.version.outputs.version }}
@@ -233,5 +254,20 @@ jobs:
           body_path: RELEASE_NOTES.md
           files: |
             dist/Beckon-v${{ steps.version.outputs.version }}.dmg
+            Casks/beckon.rb
           fail_on_unmatched_files: false
           make_latest: ${{ inputs.mark_latest && 'true' || 'false' }}
+
+      - name: Commit Homebrew cask to main
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin main
+          git checkout main
+          git add Casks/beckon.rb
+          git commit -m "chore: update Homebrew cask to v$VERSION [skip ci]"
+          git push origin main

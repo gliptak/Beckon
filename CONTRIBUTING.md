@@ -12,6 +12,8 @@ Thanks for contributing to Beckon.
 - `Beckon/FocusFollowsMouseManager.swift`: global mouse monitor + focus logic
 - `Beckon/BorderHighlightWindow.swift`: transparent floating panel that draws the border overlay
 - `Beckon/Info.plist`: app metadata and `LSUIElement`
+- `Casks/beckon.rb.template`: Homebrew cask template used during release creation
+- `Casks/beckon.rb`: generated Homebrew cask formula committed during release
 
 ## Notes On Accessibility
 
@@ -51,13 +53,45 @@ make run
 Available targets:
 
 - `make list`: list project targets/schemes
-- `make build`: unsigned Release build to `.build/Build/Products/Release/Beckon.app`
+- `make build`: unsigned universal Release build (`arm64` + `x86_64`) to `.build/Build/Products/Release/Beckon.app`
+- `make universal`: alias for `make build`
 - `make release`: alias for `make build`
-- `make debug`: unsigned Debug build
+- `make debug`: unsigned universal Debug build (`arm64` + `x86_64`)
 - `make test`: run unit tests on macOS
 - `make ci`: run local CI checks (test + release build)
-- `make run`: build Release and launch the app
+- `make run`: build universal Release and launch the app
+- `make zap`: remove local Beckon user defaults for `io.github.gliptak.beckon`
 - `make clean`: remove local build output (`.build`)
+
+Notes:
+
+- `make run` builds with signing enabled so the app can retain Accessibility permission across launches.
+- CI and release workflows use ad-hoc signing for packaged artifacts.
+
+## GitHub Actions
+
+Beckon currently uses two GitHub Actions workflows:
+
+- `Build` in [.github/workflows/build.yml](.github/workflows/build.yml)
+  - Runs on pull requests targeting `main`
+  - Runs on pushes to `main`, including merge commits
+  - Runs unit tests, generates a coverage summary, builds the app, ad-hoc signs it, and uploads a DMG artifact
+  - Comments on PRs with the artifact link and coverage summary
+  - Uses concurrency cancellation so older in-progress runs for the same PR or branch are cancelled automatically
+- `Manual Release` in [.github/workflows/release-manual.yml](.github/workflows/release-manual.yml)
+  - Runs only via manual dispatch
+  - Builds a universal Release app, ad-hoc signs it, packages a DMG, creates a version tag, and publishes a GitHub release
+  - Generates `Casks/beckon.rb` from `Casks/beckon.rb.template` by substituting the release version and DMG sha256
+  - Uploads both the DMG and generated `Casks/beckon.rb` as release assets
+  - Commits the generated `Casks/beckon.rb` back to `main` after publishing the release
+  - Generates release notes from merged PRs, with a fallback path for the first release
+  - Uses concurrency cancellation so an older in-progress manual release run on the same ref is cancelled automatically
+
+## Release Notes
+
+- Release versions use UTC time-based versioning in the form `YYYY.MM` or `YYYY.MM.N` when multiple releases are cut in the same month.
+- Release artifacts are DMG-only.
+- Release output is ad-hoc signed, not Developer ID signed or notarized.
 
 ## Next Work Items
 

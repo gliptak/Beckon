@@ -1,9 +1,16 @@
-name: PR Build
+name: Build
 
 on:
   pull_request:
     branches:
       - main
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -16,7 +23,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Select Xcode
         # Prefer the latest stable Xcode available on the runner.
@@ -105,7 +112,7 @@ jobs:
           mkdir -p dist
           cp -R build/products/Release/Beckon.app dist/
           hdiutil create \
-            -volname "Beckon PR Build" \
+            -volname "Beckon Build" \
             -srcfolder dist \
             -ov \
             -format UDZO \
@@ -120,7 +127,8 @@ jobs:
           retention-days: 14
 
       - name: Comment on PR with artifact link
-        uses: actions/github-script@v7
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v8
         with:
           script: |
             const fs = require('fs');

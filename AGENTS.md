@@ -43,6 +43,17 @@ Primary validation flow:
    - focus follows mouse when enabled
    - delay and raise toggles behave as expected
 
+CLI validation flow (preferred for automation and quick checks):
+
+1. Run `make test`.
+2. Run `make build`.
+3. If needed for local behavior verification, run `make run` and verify menu/permission/focus behavior.
+
+CI validation flow:
+
+1. `Build` workflow (`.github/workflows/build.yml`) runs on PRs to `main` and pushes to `main`.
+2. `Manual Release` workflow (`.github/workflows/release-manual.yml`) builds release artifacts and publishes releases.
+
 ## Common Task Playbook
 
 ### Add a new setting
@@ -73,6 +84,7 @@ Primary validation flow:
 ## Definition Of Done For Changes
 
 - Compiles without new warnings/errors relevant to the change
+- Passes `make test` and `make build` (or equivalent CI checks)
 - Feature works from menu bar UI through runtime behavior
 - No regressions to enable/disable, delay, raise toggles
 - Documentation is updated when behavior or settings change

@@ -1,9 +1,9 @@
 # Beckon
 
+[![Build](https://github.com/gliptak/Beckon/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/gliptak/Beckon/actions/workflows/build.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-Beckon is a macOS menu bar app that implements focus-follows-mouse.
-When your pointer hovers a window, Beckon gives that window keyboard focus without requiring a click.
+Windows should come when called. Beckon is a macOS menu bar app that quietly grants keyboard focus to whichever window your pointer lingers over — no click required, no ceremony needed.
 
 ## Current Status
 

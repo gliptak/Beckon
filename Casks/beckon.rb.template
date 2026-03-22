@@ -1,0 +1,18 @@
+cask "beckon" do
+  version "{{VERSION}}"
+  sha256 "{{SHA256}}"
+
+  url "https://github.com/gliptak/Beckon/releases/download/v#{version}/Beckon-v#{version}.dmg"
+  name "Beckon"
+  desc "macOS menu bar app for focus-follows-mouse"
+  homepage "https://github.com/gliptak/Beckon"
+
+  app "Beckon.app"
+
+  uninstall quit: "io.github.gliptak.beckon"
+
+  zap trash: [
+    "~/Library/Preferences/io.github.gliptak.beckon.plist",
+    "~/Library/Saved Application State/io.github.gliptak.beckon.savedState",
+  ]
+end

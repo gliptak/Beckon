@@ -10,6 +10,7 @@
 		A10000010000000000000001 /* BeckonApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000110000000000000001 /* BeckonApp.swift */; };
 		A10000020000000000000001 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000120000000000000001 /* AppDelegate.swift */; };
 		A10000030000000000000001 /* SettingsModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000130000000000000001 /* SettingsModel.swift */; };
+		A10000260000000000000010 /* LaunchAtLoginService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000240000000000000010 /* LaunchAtLoginService.swift */; };
 		A10000040000000000000001 /* MenuBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000140000000000000001 /* MenuBarView.swift */; };
 		A10000050000000000000001 /* WindowFinder.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000150000000000000001 /* WindowFinder.swift */; };
 		A10000060000000000000001 /* FocusFollowsMouseManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000160000000000000001 /* FocusFollowsMouseManager.swift */; };
@@ -24,6 +25,7 @@
 		A100000F0000000000000001 /* WindowCandidateSelector.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000200000000000000001 /* WindowCandidateSelector.swift */; };
 		A10000250000000000000001 /* FocusFollowsMouseManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000230000000000000001 /* FocusFollowsMouseManagerTests.swift */; };
 		A10000260000000000000001 /* WindowCandidateSelectorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000240000000000000001 /* WindowCandidateSelectorTests.swift */; };
+		A10000260000000000000009 /* WindowFinderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000240000000000000009 /* WindowFinderTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -40,6 +42,7 @@
 		A10000110000000000000001 /* BeckonApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BeckonApp.swift; sourceTree = "<group>"; };
 		A10000120000000000000001 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		A10000130000000000000001 /* SettingsModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsModel.swift; sourceTree = "<group>"; };
+		A10000240000000000000010 /* LaunchAtLoginService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchAtLoginService.swift; sourceTree = "<group>"; };
 		A10000140000000000000001 /* MenuBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarView.swift; sourceTree = "<group>"; };
 		A10000150000000000000001 /* WindowFinder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowFinder.swift; sourceTree = "<group>"; };
 		A10000160000000000000001 /* FocusFollowsMouseManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FocusFollowsMouseManager.swift; sourceTree = "<group>"; };
@@ -55,6 +58,7 @@
 		A10000200000000000000001 /* WindowCandidateSelector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowCandidateSelector.swift; sourceTree = "<group>"; };
 		A10000230000000000000001 /* FocusFollowsMouseManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FocusFollowsMouseManagerTests.swift; sourceTree = "<group>"; };
 		A10000240000000000000001 /* WindowCandidateSelectorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowCandidateSelectorTests.swift; sourceTree = "<group>"; };
+		A10000240000000000000009 /* WindowFinderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowFinderTests.swift; sourceTree = "<group>"; };
 		A10000210000000000000001 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
 		A10000220000000000000001 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = System/Library/Frameworks/XCTest.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
@@ -96,6 +100,7 @@
 				A10000110000000000000001 /* BeckonApp.swift */,
 				A10000120000000000000001 /* AppDelegate.swift */,
 				A10000130000000000000001 /* SettingsModel.swift */,
+				A10000240000000000000010 /* LaunchAtLoginService.swift */,
 				A10000140000000000000001 /* MenuBarView.swift */,
 				A10000150000000000000001 /* WindowFinder.swift */,
 				A10000160000000000000001 /* FocusFollowsMouseManager.swift */,
@@ -115,6 +120,7 @@
 				A100001F0000000000000001 /* BorderHighlightWindowTests.swift */,
 				A10000230000000000000001 /* FocusFollowsMouseManagerTests.swift */,
 				A10000240000000000000001 /* WindowCandidateSelectorTests.swift */,
+				A10000240000000000000009 /* WindowFinderTests.swift */,
 			);
 			path = BeckonTests;
 			sourceTree = "<group>";
@@ -231,6 +237,7 @@
 				A10000010000000000000001 /* BeckonApp.swift in Sources */,
 				A10000020000000000000001 /* AppDelegate.swift in Sources */,
 				A10000030000000000000001 /* SettingsModel.swift in Sources */,
+				A10000260000000000000010 /* LaunchAtLoginService.swift in Sources */,
 				A10000040000000000000001 /* MenuBarView.swift in Sources */,
 				A10000050000000000000001 /* WindowFinder.swift in Sources */,
 				A10000060000000000000001 /* FocusFollowsMouseManager.swift in Sources */,
@@ -249,6 +256,7 @@
 				A100000E0000000000000001 /* BorderHighlightWindowTests.swift in Sources */,
 				A10000250000000000000001 /* FocusFollowsMouseManagerTests.swift in Sources */,
 				A10000260000000000000001 /* WindowCandidateSelectorTests.swift in Sources */,
+				A10000260000000000000009 /* WindowFinderTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

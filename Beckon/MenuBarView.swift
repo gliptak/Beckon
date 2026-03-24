@@ -4,6 +4,7 @@ import SwiftUI
 
 struct MenuBarView: View {
     @ObservedObject var settings: SettingsModel
+    @State private var launchAtLogin: Bool = LaunchAtLoginService.isEnabled
     @State private var permissionState: Bool = AXIsProcessTrusted()
     @State private var debugMode: Bool = false
     @State private var lastEventTime: String = "—"
@@ -18,6 +19,13 @@ struct MenuBarView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Toggle("Enable Focus Follows Mouse", isOn: $settings.isEnabled)
+
+            Toggle("Launch at Login", isOn: $launchAtLogin)
+                .onChange(of: launchAtLogin) { newValue in
+                    LaunchAtLoginService.setEnabled(newValue)
+                    // Re-read actual status in case registration failed (e.g. dev build).
+                    launchAtLogin = LaunchAtLoginService.isEnabled
+                }
 
             if debugMode {
                 VStack(alignment: .leading, spacing: 4) {
@@ -109,6 +117,7 @@ struct MenuBarView: View {
         .padding(14)
         .onAppear {
             permissionState = AXIsProcessTrusted()
+            launchAtLogin = LaunchAtLoginService.isEnabled
         }
     }
 

@@ -30,6 +30,7 @@ Build and run instructions (Xcode + Makefile) are in [CONTRIBUTING.md](CONTRIBUT
 Use the menu bar icon to open settings:
 
 - Enable Focus Follows Mouse
+- **Launch at Login** toggle (uses `SMAppService`; appears in System Settings → General → Login Items)
 - Hover delay slider (0-500 ms)
 - Velocity sensitivity slider (0.00-0.20)
 - Raise window when focused

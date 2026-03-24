@@ -215,7 +215,7 @@ final class FocusFollowsMouseManager: @unchecked Sendable {
         scheduleWorkItem(delaySeconds, workItem)
     }
 
-    private func noteScrollEvent(timestamp: TimeInterval) {
+    func noteScrollEvent(timestamp: TimeInterval) {
         suppressFocusUntilTimestamp = max(
             suppressFocusUntilTimestamp,
             timestamp + Self.scrollSuppressionSeconds
@@ -303,7 +303,7 @@ final class FocusFollowsMouseManager: @unchecked Sendable {
         trackedWindowElement = nil
     }
 
-    private func handleActiveSpaceChange() {
+    func handleActiveSpaceChange() {
         pendingWorkItem?.cancel()
         pendingWorkItem = nil
         lastWindowNumber = nil

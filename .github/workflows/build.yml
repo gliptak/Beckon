@@ -128,7 +128,7 @@ jobs:
 
       - name: Comment on PR with artifact link
         if: github.event_name == 'pull_request'
-        uses: actions/github-script@v8
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd  # v8
         with:
           script: |
             const fs = require('fs');
@@ -144,7 +144,9 @@ jobs:
               coverageSummary,
               '',
               'If macOS blocks launch after download, remove quarantine and open:',
+              '```bash',
               'xattr -dr com.apple.quarantine Beckon.app',
+              '```',
             ].join('\n');
 
             await github.rest.issues.createComment({

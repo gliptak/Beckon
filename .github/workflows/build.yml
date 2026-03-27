@@ -23,7 +23,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Select Xcode
         # Prefer the latest stable Xcode available on the runner.
@@ -75,7 +75,7 @@ jobs:
           cat coverage-summary.md >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload coverage artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: Beckon-coverage-report
           path: |
@@ -120,7 +120,7 @@ jobs:
 
       - name: Upload artifact
         id: upload-artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: Beckon-adhoc-signed
           path: Beckon-adhoc-signed.dmg

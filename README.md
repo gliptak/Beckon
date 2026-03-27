@@ -1,6 +1,6 @@
 # Beckon
 
-[![Build](https://github.com/gliptak/Beckon/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/gliptak/Beckon/actions/workflows/build.yml)
+[![Build](https://github.com/gliptak/Beckon/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/gliptak/Beckon/actions/workflows/build.yml?query=branch%3Amain)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 Windows should come when called. Beckon is a macOS menu bar app that quietly grants keyboard focus to whichever window your pointer lingers over — no click required, no ceremony needed.

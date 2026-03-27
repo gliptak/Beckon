@@ -21,6 +21,7 @@ jobs:
   release:
     name: Build + Publish Release
     runs-on: macos-latest
+    if: github.ref == 'refs/heads/main'
 
     steps:
       - name: Checkout
@@ -133,7 +134,7 @@ jobs:
           cat Casks/beckon.rb
 
       - name: Generate release notes from merged PRs
-        uses: actions/github-script@v8
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd  # v8
         env:
           PREV_TAG: ${{ steps.version.outputs.prev_tag }}
           VERSION: ${{ steps.version.outputs.version }}
@@ -247,7 +248,7 @@ jobs:
           git push origin "$TAG"
 
       - name: Create GitHub release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@153bb8e04406b158c6c84fc1615b65b24149a1fe  # v2
         with:
           tag_name: ${{ steps.version.outputs.tag }}
           name: Beckon v${{ steps.version.outputs.version }}

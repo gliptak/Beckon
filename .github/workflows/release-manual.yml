@@ -134,7 +134,7 @@ jobs:
           cat Casks/beckon.rb
 
       - name: Generate release notes from merged PRs
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd  # v8
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3  # v9
         env:
           PREV_TAG: ${{ steps.version.outputs.prev_tag }}
           VERSION: ${{ steps.version.outputs.version }}
@@ -248,7 +248,7 @@ jobs:
           git push origin "$TAG"
 
       - name: Create GitHub release
-        uses: softprops/action-gh-release@153bb8e04406b158c6c84fc1615b65b24149a1fe  # v2
+        uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda  # v3
         with:
           tag_name: ${{ steps.version.outputs.tag }}
           name: Beckon v${{ steps.version.outputs.version }}
